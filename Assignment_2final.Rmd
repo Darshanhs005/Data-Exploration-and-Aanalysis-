@@ -1,0 +1,159 @@
+---
+title: "Assignment2"
+author: "Student20669886"
+date: "21 October 2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax ?or authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code?chunks within the document. You can embed an R code chunk like this:
+
+```{r}
+library(knitr)
+knit("Assignment_2final.rnw")
+library(dplyr)
+library(ggplot2)
+library(ggpubr)
+library(Hmisc)
+library(PerformanceAnalytics)
+library(corrplot)
+library(tidyr)
+library(?idyverse)
+library(datasets)
+library(knitr)
+library(arules)
+library(arulesViz)
+
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chu?k to prevent printing of the R code that gene?ated the plot.
+```{r echo=FALSE}
+
+
+data <- read.csv("Movie.csv",header=T, na.strings=c("","NA"))
+#str(data)
+#summary(data)
+#View(data)
+
+
+
+datacor <-data  %>%
+  select(Imdb_score,Reviews,
+         Director_faceb?ok_likes,
+         Cast_total_facebook_likes,?         Aspect_ratio,
+         Duration,
+         Votes,
+         Actor_1_facebook_likes,
+         Actor_2_facebook_likes,
+         Actor_3_facebook_likes,
+         Movie_facebook_likes,
+         Facenumber_in?poster,
+         Year,
+         Gross,
+      ?  Budget)
+
+datacor[colnames(datacor)]<-sapply(datacor[colnames(datacor)], as.numeric)
+#sapply(datacor,class)
+
+
+ind <- which (is.na(datacor$Aspect_ratio))
+datacor$Aspect_ratio[ind] <- mean(datacor$Aspect_ratio,n?.rm=TRUE)
+
+dat.cleaned <- na.omit(datacor)
+
+s?mmary(dat.cleaned)
+
+normalize <- function(x)
+{
+    return((x- min(x)) /(max(x)-min(x)))
+}
+
+norm_budget <- normalize(dat.cleaned$Budget)
+dat.cleaned$Budget<-round(norm_budget,digits=2)
+
+norm_gross <- normalize(d?t.cleaned$Gross)
+dat.cleaned$Gross<-round(nor?_gross,digits=2)
+
+dat.cleaned$profit <- (dat.cleaned$Gross-dat.cleaned$Budget)
+
+norm_profit<-normalize(dat.cleaned$profit)
+
+dat.cleaned$profit<-round(norm_profit,digits=2)
+
+norm_vote<- normalize(dat.cleaned$Vot?s)
+dat.cleaned$Votes<-round(norm_vote,digits=?)
+
+
+NORM_MOVIE<- normalize(dat.cleaned$Movie_facebook_likes)
+dat.cleaned$Movie_facebook_likes<-round(NORM_MOVIE,digits=2)
+
+norm_act1<- normalize(dat.cleaned$Actor_1_facebook_likes)
+dat.cleaned$Actor_1_facebook_?ikes<-round(norm_act1,digits=2)
+
+norm_act2<- ?ormalize(dat.cleaned$Actor_2_facebook_likes)
+dat.cleaned$Actor_2_facebook_likes<-round(norm_act2,digits=2)
+
+
+norm_act3<- normalize(dat.cleaned$Actor_3_facebook_likes)
+dat.cleaned$Actor_3_facebook_likes<-round(n?rm_act3,digits=2)
+
+
+
+norm_dir<- normalize(dat?cleaned$Director_facebook_likes)
+dat.cleaned$Director_facebook_likes<-round(norm_dir,digits=2)
+
+
+norm_cast<- normalize(dat.cleaned$Cast_total_facebook_likes)
+dat.cleaned$Cast_total_facebook_likes<-round(norm_ca?t,digits=2)
+
+
+r<- normalize(dat.cleaned$Revie?s)
+dat.cleaned$Reviews<-round(r,digits=2)
+
+d <-normalize(dat.cleaned$Duration)
+dat.cleaned$Duration<-d
+
+y<-normalize(dat.cleaned$Year)
+dat.cleaned$Year<-y
+
+
+lshap <- lapply(dat.cleaned, shapiro.test)
+lres <- sa?ply(lshap, `[`, c("statistic","p.value"))
+t(l?es)
+
+dat.cleaned %>%
+  gather(-profit, key = "var", value = "value") %>% 
+  ggplot(aes(x = value, y = profit)) +
+    geom_point() + xlim(0,50) +
+    facet_wrap(~ var, nrow = 10,ncol = 5) +
+  labs(title = "Relat?onship between "Profit" and other variables "?
+         x = "Number of individuals",
+        y = "Profit observation") +
+    theme_bw()
+
+
+#colnames(dat.cleaned)
+
+Corelation <- cor(dat.cleaned,use='complete.obs')
+round(Corelation, 2)
+
+corrplot(Corelation, m?thod="number",number.digits = 1, number.cex =?0.5)
+
+
+
+```
