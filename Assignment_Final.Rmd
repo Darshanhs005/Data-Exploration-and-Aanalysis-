@@ -1,0 +1,179 @@
+---
+title: "Assignment_2"
+author: "Student20669886"
+date: "9 October 2020"
+output: html_document
+  
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r load-packages}
+library(dplyr)
+library(ggplot2)
+library(ggpubr)
+library(Hmisc?
+library(PerformanceAnalytics)
+library(corrplot)
+library(tidyr)
+library(tidyverse)
+library(datasets)
+library(arules)
+library(arulesViz)
+```
+
+##Task:1
+
+```{r}
+
+data <- read.csv("Movie.csv",header=T, na.strings=c("","NA"))
+
+#Q1: To get better understanding o? the Analysis , i have choosen only numeric data, I have removed all NA's from the columns except Aspect_ratio column.
+#For Aspect_ratio i have imputed Missing values with MEAN value.
+#Later I have  normalized cloumns because range between the columns were?high.
+
+datacor <-data  %>%
+  select(Imdb_score,Reviews,
+         Director_facebook_likes,
+         Cast_total_facebook_likes,
+         Aspect_ratio,
+         Duration,
+         Votes,
+         Actor_1_facebook_likes,
+         Actor_2_facebook_likes,
+      ?  Actor_3_facebook_likes,
+         Movie_facebook_likes,
+         Facenumber_in_poster,
+         Year,
+         Gross,
+         Budget)
+
+datacor[colnames(datacor)]<-sapply(datacor[colnames(datacor)], as.numeric)
+#sapply(datacor,class)
+
+#imputing the data w?th MEAN value.
+ind <- which (is.na(datacor$Aspect_ratio))
+datacor$Aspect_ratio[ind] <- mean(datacor$Aspect_ratio,na.rm=TRUE)
+
+#Ommiting the data of NA's
+dat.cleaned <- na.omit(datacor)
+
+summary(dat.cleaned)
+
+#Normalizing the data with MIN -MAX method
+norma?ize <- function(x)
+{
+    return((x- min(x)) /(max(x)-min(x)))
+}
+
+norm_budget <- normalize(dat.cleaned$Budget)
+dat.cleaned$Budget<-round(norm_budget,digits=2)
+
+norm_gross <- normalize(dat.cleaned$Gross)
+dat.cleaned$Gross<-round(norm_gross,digits=2)
+
+dat.cle?ned$profit <- (dat.cleaned$Gross-dat.cleaned$Budget)
+
+norm_profit<-normalize(dat.cleaned$profit)
+
+dat.cleaned$profit<-round(norm_profit,digits=2)
+
+norm_vote<- normalize(dat.cleaned$Votes)
+dat.cleaned$Votes<-round(norm_vote,digits=2)
+
+summary(dat.cleaned)
+N?RM_MOVIE<- normalize(dat.cleaned$Movie_facebook_likes)
+dat.cleaned$Movie_facebook_likes <- NORM_MOVIE
+
+norm_act1<- normalize(dat.cleaned$Actor_1_facebook_likes)
+dat.cleaned$Actor_1_facebook_likes<-round(norm_act1,digits=2)
+
+norm_act2<- normalize(dat.cleane?$Actor_2_facebook_likes)
+dat.cleaned$Actor_2_facebook_likes<-round(norm_act2,digits=2)
+
+
+norm_act3<- normalize(dat.cleaned$Actor_3_facebook_likes)
+dat.cleaned$Actor_3_facebook_likes<-round(norm_act3,digits=2)
+
+
+
+norm_dir<- normalize(dat.cleaned$Director_fa?ebook_likes)
+dat.cleaned$Director_facebook_likes<-round(norm_dir,digits=2)
+
+
+norm_cast<- normalize(dat.cleaned$Cast_total_facebook_likes)
+dat.cleaned$Cast_total_facebook_likes<-round(norm_cast,digits=2)
+
+
+r<- normalize(dat.cleaned$Reviews)
+dat.cleaned$Revi?ws<-round(r,digits=2)
+
+d <-normalize(dat.cleaned$Duration)
+dat.cleaned$Duration<-d
+
+y<-normalize(dat.cleaned$Year)
+dat.cleaned$Year<-y
+
+#Doing Shapiro Test to analyzie weather the data is normally distrubuted or not.
+lshap <- lapply(dat.cleaned, shapiro.te?t)
+lres <- sapply(lshap, `[`, c("statistic","p.value"))
+t(lres)
+
+dat.cleaned %>%
+  gather(-profit, key = "var", value = "value") %>% 
+  ggplot(aes(x = value, y = profit)) +
+    geom_point() + xlim(0,50) +
+    facet_wrap(~ var, nrow = 10,ncol = 5) +
+  labs(?itle = "Relationship between “Profit” and other variables ",
+         x = "Number of individuals",
+        y = "Profit observation") +
+    theme_bw()
+
+
+#colnames(dat.cleaned)
+
+Corelation <- cor(dat.cleaned,use='complete.obs')
+round(Corelation, 2)?
+corr?lot(Corelation, method="number",number.digits = 1, number.cex = 0.5)
+
+#By the Graph we can say that most of the columns are postivitly corelated. One of the Obsevation is variable GROSS and PROFIT are fully corelated. Cast_Facebook_likes and Actor_1_?acebo?k_likes are allmost fully corelated with 0.9 value. Facenumber_in_Poster has almost Zero corelation between other variables, same goes with Aspect_ratio.
+
+
+```
+
+```{r}
+data <- read.csv("Titanic.csv")
+data
+
+#Q1: There are no missing values , Just remo?ing a?variable X which is not required for this analysis.
+
+data[["X"]] <- NULL
+str(data)
+all(is.na(data))
+data[colnames(data)]<-sapply(data[colnames(data)], as.factor)
+df<- as(data,"transactions")
+itemFrequencyPlot(df,support=0.005) 
+str(df)
+
+
+
+rules <- ap?iori(?f,parameter = list(minlen=2, supp=0.005, conf=0.8),appearance = list(rhs=c( "Survived=Yes"),default="lhs"),control = list(verbose=F))
+
+
+rules.sorted <- sort(rules, by="lift")
+inspect(rules.sorted)
+
+
+
+top3<-head(rules.sorted,3)
+
+plot(top3, method="gra?h", e?gine = "htmlwidget")
+
+
+
+
+```
+
